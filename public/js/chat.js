@@ -4,9 +4,12 @@ if (!user) window.location.href = 'login.html';
 let currentChat = null;
 let lastMessageTime = null;
 let pollInterval = null;
+const isMobile = () => window.innerWidth <= 768;
 
 document.getElementById('myAvatar').src = user.avatar;
 document.getElementById('myUsername').textContent = user.username;
+
+const sidebar = document.getElementById('sidebar');
 
 fetch('/api/online', {
   method: 'POST',
@@ -70,7 +73,20 @@ function openChat(userId, username, avatar) {
   pollMessages();
   pollInterval = setInterval(pollMessages, 2000);
   loadUsers();
+
+  if (isMobile()) {
+    sidebar.classList.add('hidden');
+  }
 }
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  sidebar.classList.remove('hidden');
+  if (isMobile()) {
+    document.getElementById('chatPlaceholder').style.display = 'flex';
+    document.getElementById('chatActive').style.display = 'none';
+    currentChat = null;
+  }
+});
 
 async function pollMessages() {
   if (!currentChat) return;
