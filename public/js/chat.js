@@ -151,6 +151,13 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   window.location.href = 'index.html';
 });
 
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const container = document.getElementById('messagesContainer');
+    if (container) container.scrollTop = container.scrollHeight;
+  });
+}
+
 loadUsers();
 setInterval(loadUsers, 5000);
 window.addEventListener('beforeunload', () => {

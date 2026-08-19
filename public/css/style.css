@@ -296,12 +296,16 @@ a:hover {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .chat-app {
   display: flex;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   position: relative;
 }
 
