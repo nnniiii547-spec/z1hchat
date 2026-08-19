@@ -16,5 +16,14 @@
     "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test",
     "createdAt": "2026-08-19T19:09:06.137Z",
     "online": false
+  },
+  {
+    "id": "d71b675c-4f8d-4e7b-b706-ee4f4d175d01",
+    "username": "test3",
+    "email": "test3@test.com",
+    "password": "$2a$10$xqo/Wd3rUKecZitnnHfAXepvOclSFNJzb3qJnZDrL9NVt3LCcZdG2",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test3",
+    "createdAt": "2026-08-19T21:03:12.858Z",
+    "online": false
   }
 ]
