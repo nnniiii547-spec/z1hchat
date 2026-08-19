@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Z1HCHAT - Chat</title>
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="chat-page">
+  <div class="chat-app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="my-profile">
+          <img id="myAvatar" src="" alt="avatar" class="avatar">
+          <span id="myUsername"></span>
+        </div>
+        <button class="icon-btn" id="logoutBtn" title="Logout">&#x2190;</button>
+      </div>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search users...">
+      </div>
+      <div class="users-list" id="usersList">
+        <div class="section-title">Online Users</div>
+      </div>
+    </aside>
+
+    <main class="chat-main">
+      <div class="chat-placeholder" id="chatPlaceholder">
+        <div class="placeholder-content">
+          <svg viewBox="0 0 100 100" width="80" height="80" opacity="0.3">
+            <circle cx="50" cy="50" r="48" fill="#667eea"/>
+            <path d="M25 35 L50 20 L75 35 L75 55 C75 70 50 85 50 85 C50 85 25 70 25 55 Z" fill="white" opacity="0.9"/>
+            <circle cx="38" cy="48" r="5" fill="#667eea"/>
+            <circle cx="50" cy="48" r="5" fill="#764ba2"/>
+            <circle cx="62" cy="48" r="5" fill="#667eea"/>
+          </svg>
+          <h2>Welcome to Z1HCHAT</h2>
+          <p>Select a user from the sidebar to start chatting</p>
+        </div>
+      </div>
+
+      <div class="chat-active" id="chatActive" style="display:none;">
+        <div class="chat-header">
+          <img id="chatAvatar" src="" alt="" class="avatar avatar-sm">
+          <div class="chat-header-info">
+            <h3 id="chatUsername"></h3>
+            <span class="status-text" id="chatStatus">Offline</span>
+          </div>
+        </div>
+        <div class="messages-container" id="messagesContainer">
+        </div>
+        <div class="typing-indicator" id="typingIndicator" style="display:none;">
+          <span class="typing-dots">
+            <span></span><span></span><span></span>
+          </span>
+          <span id="typingText"></span>
+        </div>
+        <form class="message-form" id="messageForm">
+          <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+          <button type="submit" class="send-btn" title="Send">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "Z1HCHAT",
+  "short_name": "Z1HCHAT",
+  "description": "Chat with people around the world",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

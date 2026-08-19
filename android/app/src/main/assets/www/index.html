@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Z1HCHAT - Chat with the World</title>
+  <meta name="description" content="Chat with people around the world">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Z1HCHAT">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="landing-page">
+  <div class="landing-container">
+    <div class="logo-section">
+      <div class="logo-icon">
+        <svg viewBox="0 0 100 100" width="120" height="120">
+          <defs>
+            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea"/>
+              <stop offset="100%" style="stop-color:#764ba2"/>
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="url(#logoGrad)"/>
+          <path d="M25 35 L50 20 L75 35 L75 55 C75 70 50 85 50 85 C50 85 25 70 25 55 Z" fill="white" opacity="0.95"/>
+          <circle cx="38" cy="48" r="5" fill="#667eea"/>
+          <circle cx="50" cy="48" r="5" fill="#764ba2"/>
+          <circle cx="62" cy="48" r="5" fill="#667eea"/>
+          <path d="M35 60 Q50 72 65 60" fill="none" stroke="#667eea" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="app-title">Z1HCHAT</h1>
+      <p class="app-tagline">Connect with people from every corner of the world</p>
+    </div>
+
+    <div class="features-section">
+      <div class="feature">
+        <div class="feature-icon">&#128172;</div>
+        <h3>Real-Time Chat</h3>
+        <p>Instant messaging with live typing indicators</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#127758;</div>
+        <h3>Global Network</h3>
+        <p>Meet and talk with people worldwide</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#128274;</div>
+        <h3>Secure</h3>
+        <p>Your conversations are private and safe</p>
+      </div>
+    </div>
+
+    <div class="cta-buttons">
+      <a href="register.html" class="btn btn-primary">Create Account</a>
+      <a href="login.html" class="btn btn-secondary">Sign In</a>
+    </div>
+
+    <a href="downloads.html" class="btn btn-download">&#11015; Download App</a>
+
+    <button class="btn btn-install" id="installBtn" style="display:none;">
+      &#10010; Install Z1HCHAT App
+    </button>
+
+    <div class="user-count" id="userCount">
+      <span class="count-number">0</span> users online now
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('installBtn').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('installBtn').style.display = 'none';
+    });
+
+    const socket = io();
+    async function loadUserCount() {
+      try {
+        const res = await fetch('/api/users');
+        const users = await res.json();
+        const onlineCount = users.filter(u => u.online).length;
+        document.querySelector('.count-number').textContent = onlineCount;
+      } catch(e) {
+        document.querySelector('.count-number').textContent = '0';
+      }
+    }
+    loadUserCount();
+    setInterval(loadUserCount, 5000);
+  </script>
+</body>
+</html>

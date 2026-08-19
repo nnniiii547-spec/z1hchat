@@ -1,0 +1,20 @@
+[
+  {
+    "id": "214ebeb1-f255-4090-88da-4173f91134af",
+    "username": "Z1H",
+    "email": "nnniiii547@gmail.com",
+    "password": "$2a$10$pMt2RXjIFGBRLpdyFwaaG.UiRAgcPoCdJI9wIT8JTTusDGPle.ejC",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Z1H",
+    "createdAt": "2026-08-19T13:18:14.122Z",
+    "online": false
+  },
+  {
+    "id": "cc268594-3749-41ab-9eef-008e2c875642",
+    "username": "test",
+    "email": "test@test.com",
+    "password": "$2a$10$x4QS5/yWFIWCoET6xfVJ2esK01rbj2P6s3p71ApYEocclJxwKE3u.",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test",
+    "createdAt": "2026-08-19T19:09:06.137Z",
+    "online": false
+  }
+]
