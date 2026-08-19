@@ -26,7 +26,6 @@ body {
   background: var(--bg-dark);
   color: var(--text-primary);
   min-height: 100vh;
-  min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   overscroll-behavior: none;
@@ -86,7 +85,6 @@ a:hover {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  min-height: 100dvh;
   background: radial-gradient(ellipse at top, #1a1a3e 0%, var(--bg-dark) 70%);
   padding: 20px;
 }
@@ -192,7 +190,6 @@ a:hover {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  min-height: 100dvh;
   background: radial-gradient(ellipse at top, #1a1a3e 0%, var(--bg-dark) 70%);
   padding: 16px;
 }
@@ -291,22 +288,20 @@ a:hover {
   color: var(--text-secondary);
 }
 
-/* Chat Page */
+/* Chat Page — fixed layout so keyboard doesn't break it */
 .chat-page {
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  overflow: hidden;
 }
 
 .chat-app {
   display: flex;
+  width: 100%;
   height: 100%;
-  position: relative;
 }
 
 /* Sidebar */
@@ -317,6 +312,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100%;
 }
 
 .sidebar-header {
@@ -456,6 +452,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
 }
 
 .chat-placeholder {
@@ -483,9 +480,9 @@ a:hover {
 }
 
 .chat-active {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .chat-header {
@@ -690,8 +687,6 @@ a:hover {
     top: 0;
     left: 0;
     z-index: 10;
-    height: 100%;
-    transition: transform 0.25s ease;
   }
 
   .sidebar.hidden {
