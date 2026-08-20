@@ -16,7 +16,8 @@
           <span id="myUsername"></span>
         </div>
         <div class="sidebar-actions">
-          <button id="storyBtn" class="icon-btn" title="Post Story">📖</button>
+          <button id="storyFeedBtn" class="icon-btn" title="Stories Feed">📰</button>
+          <button id="storyBtn" class="icon-btn" title="Post Story">📸</button>
           <button id="editProfileBtn" class="icon-btn" title="Edit Profile">✏️</button>
           <button id="logoutBtn" class="icon-btn logout" title="Logout">⏻</button>
         </div>
@@ -78,12 +79,20 @@
           <textarea id="editBio" placeholder="About you..." rows="3"></textarea>
         </div>
         <div class="form-group">
-          <label>Profile Picture URL</label>
-          <input type="text" id="editAvatarUrl" placeholder="https://...">
+          <label>Profile Picture</label>
+          <label class="file-upload" for="editAvatarFile">
+            <span class="file-upload-label">Choose image from gallery</span>
+          </label>
+          <input type="file" id="editAvatarFile" accept="image/*">
+          <input type="text" id="editAvatarUrl" placeholder="...or paste image URL">
         </div>
         <div class="form-group">
-          <label>Or upload from gallery</label>
-          <input type="file" id="editAvatarFile" accept="image/*">
+          <label>Who can see your stories</label>
+          <select id="editStoryPrivacy">
+            <option value="everyone">Everyone</option>
+            <option value="contacts">Contacts only</option>
+            <option value="nobody">Nobody (hide stories)</option>
+          </select>
         </div>
         <div class="overlay-actions">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('editOverlay').style.display='none'">Cancel</button>
@@ -96,8 +105,37 @@
   <!-- STORY VIEW OVERLAY -->
   <div class="overlay" id="storyOverlay">
     <div class="overlay-content story-viewer">
+      <button class="story-close-btn" id="storyCloseBtn">&times;</button>
       <div class="story-author" id="storyAuthor"></div>
-      <div class="story-content"></div>
+      <div class="story-content" id="storyViewContent"></div>
+      <div class="story-view-actions" id="storyViewActions" style="display:none;">
+        <button class="story-action-btn" id="storyEditBtn">Edit</button>
+        <button class="story-action-btn story-action-danger" id="storyDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT STORY OVERLAY -->
+  <div class="overlay" id="editStoryOverlay">
+    <div class="overlay-content">
+      <h3>Edit Story</h3>
+      <form id="editStoryForm">
+        <div class="form-group">
+          <label>Text</label>
+          <input type="text" id="editStoryText" placeholder="Story text">
+        </div>
+        <div class="form-group">
+          <label>New Image</label>
+          <label class="file-upload" for="editStoryFile">
+            <span class="file-upload-label">Choose new image</span>
+          </label>
+          <input type="file" id="editStoryFile" accept="image/*">
+        </div>
+        <div class="overlay-actions">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('editStoryOverlay').style.display='none'">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -112,13 +150,35 @@
         </div>
         <div class="form-group">
           <label>Image</label>
+          <label class="file-upload" for="storyFile">
+            <span class="file-upload-label">Choose image from gallery</span>
+          </label>
           <input type="file" id="storyFile" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label>Who can see this</label>
+          <select id="storyVisibility">
+            <option value="everyone">Everyone</option>
+            <option value="contacts">Contacts only</option>
+            <option value="nobody">Nobody</option>
+          </select>
         </div>
         <div class="overlay-actions">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('storyOverlay2').style.display='none'">Cancel</button>
           <button type="submit" class="btn btn-primary">Post</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- STORY FEED OVERLAY -->
+  <div class="overlay" id="storyFeedOverlay">
+    <div class="overlay-content story-feed">
+      <div class="story-feed-header">
+        <h3>Stories</h3>
+        <button class="story-close-btn" id="storyFeedCloseBtn">&times;</button>
+      </div>
+      <div class="story-feed-list" id="storyFeedList"></div>
     </div>
   </div>
 

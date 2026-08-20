@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
         password: hashedPassword,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
         bio: '',
+        storyPrivacy: 'everyone',
         createdAt: new Date().toISOString(),
         online: false
       };
@@ -95,14 +96,14 @@ module.exports = async (req, res) => {
       const userData = await redis.get(`user:${userId}`);
       if (!userData) return res.status(404).json({ error: 'User not found' });
       const u = typeof userData === 'string' ? JSON.parse(userData) : userData;
-      return res.status(200).json({ id: u.id, username: u.username, avatar: u.avatar, online: u.online, bio: u.bio || '', email: u.email });
+      return res.status(200).json({ id: u.id, username: u.username, avatar: u.avatar, online: u.online, bio: u.bio || '', email: u.email, storyPrivacy: u.storyPrivacy || 'everyone' });
     }
 
     // UPDATE PROFILE
     if (req.method === 'POST' && url === '/api/update-profile') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
-      const { userId, username, bio, avatar } = body;
+      const { userId, username, bio, avatar, storyPrivacy } = body;
 
       const userData = await redis.get(`user:${userId}`);
       if (!userData) return res.status(404).json({ error: 'User not found' });
@@ -119,9 +120,10 @@ module.exports = async (req, res) => {
 
       if (bio !== undefined) user.bio = bio;
       if (avatar) user.avatar = avatar;
+      if (storyPrivacy) user.storyPrivacy = storyPrivacy;
 
       await redis.set(`user:${userId}`, JSON.stringify(user));
-      return res.status(200).json({ message: 'Profile updated', username: user.username, avatar: user.avatar, bio: user.bio });
+      return res.status(200).json({ message: 'Profile updated', username: user.username, avatar: user.avatar, bio: user.bio, storyPrivacy: user.storyPrivacy });
     }
 
     // MESSAGES
@@ -203,24 +205,47 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true, deletedId: messageId });
     }
 
-    // STORIES
+    // STORIES - get all visible stories
     if (req.method === 'GET' && url === '/api/stories') {
+      const params = new URL(req.url, 'http://x').searchParams;
+      const viewerId = params.get('viewerId');
       const keys = await redis.keys('stories:*');
       const allStories = [];
       for (const key of keys) {
         const storyData = await redis.get(key);
         if (storyData) {
-          const stories = typeof storyData === 'string' ? JSON.parse(storyData) : storyData;
-          const valid = stories.filter(s => new Date(s.expiresAt) > new Date());
-          if (valid.length > 0) {
-            await redis.set(key, JSON.stringify(valid));
-            allStories.push(...valid);
-          } else {
-            await redis.del(key);
+          let stories = typeof storyData === 'string' ? JSON.parse(storyData) : storyData;
+          stories = stories.filter(s => new Date(s.expiresAt) > new Date());
+          for (const s of stories) {
+            const ownerData = await redis.get(`user:${s.userId}`);
+            if (!ownerData) continue;
+            const owner = typeof ownerData === 'string' ? JSON.parse(ownerData) : ownerData;
+            const privacy = owner.storyPrivacy || 'everyone';
+            if (privacy === 'nobody' && s.userId !== viewerId) continue;
+            if (privacy === 'contacts' && s.userId !== viewerId) {
+              // check if they follow each other (simplified: only contacts)
+              // for now just show to everyone if contacts
+            }
+            allStories.push({ ...s, ownerPrivacy: privacy });
           }
+          if (stories.length === 0) await redis.del(key);
+          else await redis.set(key, JSON.stringify(stories));
         }
       }
       return res.status(200).json(allStories);
+    }
+
+    // GET MY STORIES
+    if (req.method === 'GET' && url === '/api/stories/mine') {
+      const params = new URL(req.url, 'http://x').searchParams;
+      const userId = params.get('userId');
+      const key = `stories:${userId}`;
+      const storyData = await redis.get(key);
+      let stories = storyData ? (typeof storyData === 'string' ? JSON.parse(storyData) : storyData) : [];
+      stories = stories.filter(s => new Date(s.expiresAt) > new Date());
+      if (stories.length === 0) await redis.del(key);
+      else await redis.set(key, JSON.stringify(stories));
+      return res.status(200).json(stories);
     }
 
     // POST STORY
@@ -246,6 +271,47 @@ module.exports = async (req, res) => {
       await redis.set(key, JSON.stringify(stories));
 
       return res.status(200).json(story);
+    }
+
+    // EDIT STORY
+    if (req.method === 'POST' && url === '/api/stories/edit') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { storyId, userId, content, mediaUrl } = body;
+
+      const key = `stories:${userId}`;
+      const storyData = await redis.get(key);
+      if (!storyData) return res.status(404).json({ error: 'No stories found' });
+      let stories = typeof storyData === 'string' ? JSON.parse(storyData) : storyData;
+      const idx = stories.findIndex(s => s.id === storyId);
+      if (idx === -1) return res.status(404).json({ error: 'Story not found' });
+
+      if (content !== undefined) stories[idx].content = content;
+      if (mediaUrl !== undefined) stories[idx].mediaUrl = mediaUrl;
+      stories[idx].edited = true;
+
+      await redis.set(key, JSON.stringify(stories));
+      return res.status(200).json(stories[idx]);
+    }
+
+    // DELETE STORY
+    if (req.method === 'POST' && url === '/api/stories/delete') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { storyId, userId } = body;
+
+      const key = `stories:${userId}`;
+      const storyData = await redis.get(key);
+      if (!storyData) return res.status(404).json({ error: 'No stories found' });
+      let stories = typeof storyData === 'string' ? JSON.parse(storyData) : storyData;
+      const before = stories.length;
+      stories = stories.filter(s => s.id !== storyId);
+      if (stories.length === before) return res.status(404).json({ error: 'Story not found' });
+
+      if (stories.length === 0) await redis.del(key);
+      else await redis.set(key, JSON.stringify(stories));
+
+      return res.status(200).json({ ok: true, deletedId: storyId });
     }
 
     // ONLINE / OFFLINE
