@@ -290,11 +290,8 @@ a:hover {
 
 /* Chat Page — fixed layout so keyboard doesn't break it */
 .chat-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -311,6 +308,14 @@ a:hover {
   flex-direction: column;
   min-width: 0;
   height: 100%;
+  position: relative;
+}
+
+.chat-active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .chat-user-info {
@@ -972,6 +977,7 @@ input[type="file"] {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1146,7 +1152,7 @@ input[type="file"] {
     display: none;
   }
 
-  .chat-main {
+  .chat-area {
     width: 100%;
   }
 
@@ -1164,14 +1170,6 @@ input[type="file"] {
 
   .message {
     max-width: 85%;
-  }
-
-  .messages-container {
-    padding: 12px;
-  }
-
-  .message-form {
-    padding: 10px 12px;
   }
 
   .chat-placeholder h2 {
