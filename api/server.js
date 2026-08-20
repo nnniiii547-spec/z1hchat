@@ -161,6 +161,48 @@ module.exports = async (req, res) => {
       return res.status(200).json(msg);
     }
 
+    // EDIT MESSAGE
+    if (req.method === 'POST' && url === '/api/messages/edit') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { messageId, senderId, user1, user2, newContent } = body;
+      if (!messageId || !senderId || !user1 || !user2 || !newContent) {
+        return res.status(400).json({ error: 'Missing fields' });
+      }
+      const chatKey = [user1, user2].sort().join(':');
+      const existing = await redis.get(`chat:${chatKey}`);
+      if (!existing) return res.status(404).json({ error: 'Chat not found' });
+      let messages = typeof existing === 'string' ? JSON.parse(existing) : existing;
+      const idx = messages.findIndex(m => m.id === messageId);
+      if (idx === -1) return res.status(404).json({ error: 'Message not found' });
+      if (messages[idx].senderId !== senderId) return res.status(403).json({ error: 'Not your message' });
+      messages[idx].content = newContent;
+      messages[idx].edited = true;
+      messages[idx].editedAt = new Date().toISOString();
+      await redis.set(`chat:${chatKey}`, JSON.stringify(messages));
+      return res.status(200).json(messages[idx]);
+    }
+
+    // DELETE MESSAGE
+    if (req.method === 'POST' && url === '/api/messages/delete') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { messageId, senderId, user1, user2 } = body;
+      if (!messageId || !senderId || !user1 || !user2) {
+        return res.status(400).json({ error: 'Missing fields' });
+      }
+      const chatKey = [user1, user2].sort().join(':');
+      const existing = await redis.get(`chat:${chatKey}`);
+      if (!existing) return res.status(404).json({ error: 'Chat not found' });
+      let messages = typeof existing === 'string' ? JSON.parse(existing) : existing;
+      const msg = messages.find(m => m.id === messageId);
+      if (!msg) return res.status(404).json({ error: 'Message not found' });
+      if (msg.senderId !== senderId) return res.status(403).json({ error: 'Not your message' });
+      messages = messages.filter(m => m.id !== messageId);
+      await redis.set(`chat:${chatKey}`, JSON.stringify(messages));
+      return res.status(200).json({ ok: true, deletedId: messageId });
+    }
+
     // STORIES
     if (req.method === 'GET' && url === '/api/stories') {
       const keys = await redis.keys('stories:*');

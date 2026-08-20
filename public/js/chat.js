@@ -4,6 +4,7 @@ if (!user) window.location.href = 'login.html';
 let currentChat = null;
 let lastMessageTime = null;
 let pollInterval = null;
+let allMessages = [];
 const isMobile = () => window.innerWidth <= 768;
 
 const sidebar = document.getElementById('sidebar');
@@ -94,12 +95,14 @@ function userItem(u) {
 function openChat(userId, username, avatar) {
   currentChat = { id: userId, username, avatar };
   lastMessageTime = null;
+  allMessages = [];
   document.getElementById('chatPlaceholder').style.display = 'none';
   document.getElementById('chatActive').style.display = 'flex';
   document.getElementById('chatAvatar').src = avatar;
   document.getElementById('chatUsername').textContent = username;
   document.getElementById('typingIndicator').style.display = 'none';
   document.getElementById('messagesContainer').innerHTML = '';
+  hideContextMenu();
 
   if (pollInterval) clearInterval(pollInterval);
   pollMessages();
@@ -115,6 +118,7 @@ document.getElementById('backBtn').addEventListener('click', () => {
     document.getElementById('chatPlaceholder').style.display = 'flex';
     document.getElementById('chatActive').style.display = 'none';
     currentChat = null;
+    hideContextMenu();
   }
 });
 
@@ -127,8 +131,10 @@ async function pollMessages() {
     const res = await fetch(url);
     const msgs = await res.json();
     if (msgs.length > 0) {
-      msgs.forEach(msg => appendMessage(msg));
-      lastMessageTime = msgs[msgs[msgs.length - 1].id] || msgs[msgs.length - 1].timestamp;
+      msgs.forEach(msg => {
+        allMessages.push(msg);
+        appendMessage(msg);
+      });
       lastMessageTime = msgs[msgs.length - 1].timestamp;
     }
   } catch (e) {}
@@ -139,16 +145,105 @@ function appendMessage(msg) {
   const div = document.createElement('div');
   const isSent = msg.senderId === user.id;
   div.className = `message ${isSent ? 'sent' : 'received'}`;
+  div.dataset.id = msg.id;
+  div.dataset.sender = msg.senderId;
+  div.dataset.content = msg.content || '';
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const editedTag = msg.edited ? ' <em>(edited)</em>' : '';
 
   if (msg.type === 'voice') {
-    div.innerHTML = `<audio controls src="${msg.content}" style="max-width:200px;height:36px;"></audio><span class="message-time">${time}</span>`;
+    div.innerHTML = `<audio controls src="${msg.content}" style="max-width:200px;height:36px;"></audio><span class="message-time">${time}${editedTag}</span>`;
   } else {
-    div.innerHTML = `${msg.content}<span class="message-time">${time}</span>`;
+    div.innerHTML = `<span class="msg-text">${msg.content}</span><span class="message-time">${time}${editedTag}</span>`;
   }
+
+  // Right-click / long-press menu (only on own messages)
+  if (isSent) {
+    div.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showContextMenu(e, msg);
+    });
+    let touchTimer;
+    div.addEventListener('touchstart', (e) => {
+      touchTimer = setTimeout(() => {
+        e.preventDefault();
+        showContextMenu(e, msg);
+      }, 500);
+    }, { passive: false });
+    div.addEventListener('touchend', () => clearTimeout(touchTimer));
+    div.addEventListener('touchmove', () => clearTimeout(touchTimer));
+  }
+
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
+
+// --- CONTEXT MENU ---
+const ctxMenu = document.getElementById('contextMenu');
+const ctxOverlay = document.getElementById('ctxOverlay');
+
+function showContextMenu(e, msg) {
+  hideContextMenu();
+  const rect = (e.target || e.touches?.[0]?.target).getBoundingClientRect();
+  const x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : rect.left);
+  const y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : rect.top);
+
+  ctxMenu.style.display = 'block';
+  ctxOverlay.style.display = 'block';
+  ctxMenu.dataset.msgId = msg.id;
+  ctxMenu.dataset.content = msg.content;
+
+  const menuW = 140;
+  const menuH = 90;
+  let left = x;
+  let top = y;
+  if (left + menuW > window.innerWidth) left = window.innerWidth - menuW - 10;
+  if (top + menuH > window.innerHeight) top = window.innerHeight - menuH - 10;
+  if (top < 10) top = 10;
+  if (left < 10) left = 10;
+
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top = top + 'px';
+}
+
+function hideContextMenu() {
+  if (ctxMenu) ctxMenu.style.display = 'none';
+  if (ctxOverlay) ctxOverlay.style.display = 'none';
+}
+
+if (ctxOverlay) ctxOverlay.addEventListener('click', hideContextMenu);
+
+document.getElementById('ctxEdit')?.addEventListener('click', () => {
+  const content = ctxMenu.dataset.content;
+  const input = document.getElementById('messageInput');
+  input.value = content;
+  input.dataset.editId = ctxMenu.dataset.msgId;
+  input.placeholder = 'Edit message...';
+  input.focus();
+  hideContextMenu();
+});
+
+document.getElementById('ctxDelete')?.addEventListener('click', async () => {
+  const messageId = ctxMenu.dataset.msgId;
+  hideContextMenu();
+  try {
+    const res = await fetch('/api/messages/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messageId,
+        senderId: user.id,
+        user1: user.id,
+        user2: currentChat.id
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error); return; }
+    const el = document.querySelector(`.message[data-id="${messageId}"]`);
+    if (el) el.remove();
+    allMessages = allMessages.filter(m => m.id !== messageId);
+  } catch (e) {}
+});
 
 async function sendMessage(content, type = 'text') {
   if (!content || !currentChat) return;
@@ -163,17 +258,53 @@ async function sendMessage(content, type = 'text') {
     });
     const msg = await res.json();
     appendMessage(msg);
+    allMessages.push(msg);
     lastMessageTime = msg.timestamp;
   } catch (e) {}
 }
 
-// --- TEXT MESSAGE ---
+// --- TEXT MESSAGE / EDIT ---
 document.getElementById('messageForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('messageInput');
   const content = input.value.trim();
   if (!content) return;
-  await sendMessage(content, 'text');
+
+  const editId = input.dataset.editId;
+  if (editId) {
+    // Edit existing message
+    try {
+      const res = await fetch('/api/messages/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: editId,
+          senderId: user.id,
+          user1: user.id,
+          user2: currentChat.id,
+          newContent: content
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error); return; }
+      const el = document.querySelector(`.message[data-id="${editId}"]`);
+      if (el) {
+        el.dataset.content = content;
+        const txt = el.querySelector('.msg-text');
+        if (txt) txt.textContent = content;
+        const time = el.querySelector('.message-time');
+        if (time && !time.textContent.includes('(edited)')) {
+          time.textContent += ' (edited)';
+        }
+      }
+      const stored = allMessages.find(m => m.id === editId);
+      if (stored) { stored.content = content; stored.edited = true; }
+      delete input.dataset.editId;
+      input.placeholder = 'Type a message...';
+    } catch (e) {}
+  } else {
+    await sendMessage(content, 'text');
+  }
   input.value = '';
 });
 
