@@ -27,13 +27,13 @@
         </svg>
       </div>
       <h1>Welcome Back</h1>
-      <p>Sign in to continue chatting</p>
+      <p>Sign in with email or username</p>
     </div>
 
     <form id="loginForm" class="auth-form">
       <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="Enter your email" required>
+        <label for="login">Email or Username</label>
+        <input type="text" id="login" placeholder="Email or username" required>
       </div>
       <div class="form-group">
         <label for="password">Password</label>
@@ -48,6 +48,30 @@
     </div>
   </div>
 
-  <script src="js/auth.js"></script>
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+      const login = document.getElementById('login').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login, password })
+        });
+        const data = await res.json();
+        if (!res.ok) { errorMsg.textContent = data.error; return; }
+        localStorage.setItem('user', JSON.stringify({ id: data.userId, username: data.username, avatar: data.avatar }));
+        window.location.href = 'chat.html';
+      } catch (err) {
+        errorMsg.textContent = 'Connection error. Please try again.';
+      }
+    });
+  </script>
 </body>
 </html>

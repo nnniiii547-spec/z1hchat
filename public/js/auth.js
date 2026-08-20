@@ -46,36 +46,3 @@ if (registerForm) {
     }
   });
 }
-
-if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorMsg.textContent = '';
-
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        errorMsg.textContent = data.error;
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify({
-        id: data.userId,
-        username: data.username,
-        avatar: data.avatar
-      }));
-      window.location.href = 'chat.html';
-    } catch (err) {
-      errorMsg.textContent = 'Connection error. Please try again.';
-    }
-  });
-}
