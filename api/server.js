@@ -1,8 +1,8 @@
+const { Redis } = require('@upstash/redis');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const users = [];
-const messages = [];
+const redis = Redis.fromEnv();
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,26 +18,63 @@ module.exports = async (req, res) => {
       if (typeof body === 'string') body = JSON.parse(body);
       const { username, email, password } = body;
       if (!username || !email || !password) return res.status(400).json({ error: 'All fields are required' });
-      if (users.find(u => u.email === email)) return res.status(400).json({ error: 'Email already registered' });
-      if (users.find(u => u.username === username)) return res.status(400).json({ error: 'Username already taken' });
+
+      const existingEmail = await redis.get(`email:${email}`);
+      if (existingEmail) return res.status(400).json({ error: 'Email already registered' });
+
+      const existingUser = await redis.get(`username:${username}`);
+      if (existingUser) return res.status(400).json({ error: 'Username already taken' });
+
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = { id: uuidv4(), username, email, password: hashedPassword, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`, createdAt: new Date().toISOString(), online: true };
-      users.push(user);
-      return res.status(200).json({ message: 'Account created', userId: user.id, username: user.username, avatar: user.avatar });
+      const userId = uuidv4();
+      const user = {
+        id: userId,
+        username,
+        email,
+        password: hashedPassword,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+        createdAt: new Date().toISOString(),
+        online: false
+      };
+
+      await redis.set(`user:${userId}`, JSON.stringify(user));
+      await redis.set(`email:${email}`, userId);
+      await redis.set(`username:${username}`, userId);
+
+      return res.status(200).json({ message: 'Account created', userId, username, avatar: user.avatar });
     }
 
     if (req.method === 'POST' && url === '/api/login') {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
       const { email, password } = body;
-      const user = users.find(u => u.email === email);
-      if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: 'Invalid email or password' });
+
+      const userId = await redis.get(`email:${email}`);
+      if (!userId) return res.status(401).json({ error: 'Invalid email or password' });
+
+      const userData = await redis.get(`user:${userId}`);
+      if (!userData) return res.status(401).json({ error: 'Invalid email or password' });
+
+      const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
+      if (!(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: 'Invalid email or password' });
+
       user.online = true;
+      await redis.set(`user:${userId}`, JSON.stringify(user));
+
       return res.status(200).json({ message: 'Login successful', userId: user.id, username: user.username, avatar: user.avatar });
     }
 
     if (req.method === 'GET' && url === '/api/users') {
-      return res.status(200).json(users.map(u => ({ id: u.id, username: u.username, avatar: u.avatar, online: u.online })));
+      const keys = await redis.keys('user:*');
+      const users = [];
+      for (const key of keys) {
+        const userData = await redis.get(key);
+        if (userData) {
+          const u = typeof userData === 'string' ? JSON.parse(userData) : userData;
+          users.push({ id: u.id, username: u.username, avatar: u.avatar, online: u.online });
+        }
+      }
+      return res.status(200).json(users);
     }
 
     if (req.method === 'GET' && url.startsWith('/api/messages')) {
@@ -45,10 +82,10 @@ module.exports = async (req, res) => {
       const user1 = params.get('user1');
       const user2 = params.get('user2');
       const after = params.get('after');
-      let chat = messages.filter(m =>
-        (m.senderId === user1 && m.receiverId === user2) ||
-        (m.senderId === user2 && m.receiverId === user1)
-      );
+
+      const chatKey = [user1, user2].sort().join(':');
+      const msgData = await redis.get(`chat:${chatKey}`);
+      let chat = msgData ? (typeof msgData === 'string' ? JSON.parse(msgData) : msgData) : [];
       if (after) chat = chat.filter(m => m.timestamp > after);
       return res.status(200).json(chat);
     }
@@ -58,7 +95,14 @@ module.exports = async (req, res) => {
       if (typeof body === 'string') body = JSON.parse(body);
       const { senderId, senderName, senderAvatar, receiverId, content } = body;
       const msg = { id: uuidv4(), senderId, senderName, senderAvatar, receiverId, content, timestamp: new Date().toISOString() };
+
+      const chatKey = [senderId, receiverId].sort().join(':');
+      const existing = await redis.get(`chat:${chatKey}`);
+      let messages = existing ? (typeof existing === 'string' ? JSON.parse(existing) : existing) : [];
       messages.push(msg);
+      if (messages.length > 500) messages = messages.slice(-300);
+      await redis.set(`chat:${chatKey}`, JSON.stringify(messages));
+
       return res.status(200).json(msg);
     }
 
@@ -66,8 +110,12 @@ module.exports = async (req, res) => {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
       const { userId } = body;
-      const user = users.find(u => u.id === userId);
-      if (user) user.online = true;
+      const userData = await redis.get(`user:${userId}`);
+      if (userData) {
+        const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
+        user.online = true;
+        await redis.set(`user:${userId}`, JSON.stringify(user));
+      }
       return res.status(200).json({ ok: true });
     }
 
@@ -75,8 +123,12 @@ module.exports = async (req, res) => {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
       const { userId } = body;
-      const user = users.find(u => u.id === userId);
-      if (user) user.online = false;
+      const userData = await redis.get(`user:${userId}`);
+      if (userData) {
+        const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
+        user.online = false;
+        await redis.set(`user:${userId}`, JSON.stringify(user));
+      }
       return res.status(200).json({ ok: true });
     }
 

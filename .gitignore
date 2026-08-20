@@ -3,3 +3,4 @@ data/users.json
 data/messages.json
 .DS_Store
 .vercel
+.env*
