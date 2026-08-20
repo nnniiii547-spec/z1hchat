@@ -14,6 +14,80 @@ const sidebar = document.getElementById('sidebar');
 document.getElementById('myAvatar').src = user.avatar;
 document.getElementById('myUsername').textContent = user.username;
 
+// --- NAV PANEL SWITCHING ---
+document.getElementById('navAvatar').src = user.avatar;
+var navBtns = document.querySelectorAll('.nav-btn[data-panel]');
+navBtns.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var panel = btn.dataset.panel;
+    navBtns.forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    var target = document.getElementById('panel' + panel.charAt(0).toUpperCase() + panel.slice(1));
+    if (target) target.classList.add('active');
+    if (panel === 'stories') loadStoryFeed();
+    if (panel === 'profile') loadProfilePanel();
+  });
+});
+
+function loadProfilePanel() {
+  document.getElementById('profileAvatar').src = user.avatar;
+  document.getElementById('profileName').textContent = user.username;
+  document.getElementById('profileBio').textContent = user.bio || 'No bio yet';
+}
+
+async function loadStoryFeed() {
+  var list = document.getElementById('storyFeedList');
+  list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Loading...</p>';
+  try {
+    var res = await fetch('/api/stories?viewerId=' + user.id);
+    var stories = await res.json();
+    if (stories.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No stories yet</p>';
+      return;
+    }
+    list.innerHTML = stories.map(function(s) {
+      var timeLeft = Math.max(0, Math.floor((new Date(s.expiresAt) - new Date()) / (1000 * 60 * 60)));
+      var isMine = s.userId === user.id;
+      return '<div class="feed-story-item" data-story=\'' + JSON.stringify(s).replace(/'/g, '&apos;') + '\'>' +
+        '<img src="' + s.avatar + '" class="feed-story-avatar" alt="">' +
+        '<div class="feed-story-info">' +
+          '<span class="feed-story-name">' + s.username + (isMine ? ' (You)' : '') + '</span>' +
+          '<span class="feed-story-time">' + timeLeft + 'h left</span>' +
+        '</div>' +
+        (isMine ? '<button class="feed-story-delete" data-id="' + s.id + '">\u2715</button>' : '') +
+      '</div>';
+    }).join('');
+
+    list.querySelectorAll('.feed-story-item').forEach(function(el) {
+      el.addEventListener('click', function(e) {
+        if (e.target.classList.contains('feed-story-delete')) return;
+        showStory(JSON.parse(el.dataset.story));
+      });
+    });
+
+    list.querySelectorAll('.feed-story-delete').forEach(function(btn) {
+      btn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        if (!confirm('Delete this story?')) return;
+        await fetch('/api/stories/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storyId: btn.dataset.id, userId: user.id })
+        });
+        loadStories();
+        loadStoryFeed();
+      });
+    });
+  } catch(e) {
+    list.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px;">Error loading stories</p>';
+  }
+}
+
+document.getElementById('storyFeedBtn').addEventListener('click', function() {
+  document.querySelector('.nav-btn[data-panel="stories"]').click();
+});
+
 fetch('/api/online', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -134,69 +208,6 @@ document.getElementById('editStoryForm').addEventListener('submit', async (e) =>
     document.getElementById('editStoryOverlay').style.display = 'none';
     loadStories();
   } catch(e) { alert('Error editing story'); }
-});
-
-// --- STORY FEED ---
-document.getElementById('storyFeedBtn').addEventListener('click', async function() {
-  document.getElementById('storyFeedOverlay').style.display = 'flex';
-  var list = document.getElementById('storyFeedList');
-  list.innerHTML = '<p style="color:var(--text-muted);text-align:center;">Loading...</p>';
-  try {
-    var res = await fetch('/api/stories?viewerId=' + user.id);
-    var stories = await res.json();
-    if (stories.length === 0) {
-      list.innerHTML = '<p style="color:var(--text-muted);text-align:center;">No stories yet</p>';
-      return;
-    }
-    list.innerHTML = stories.map(function(s) {
-      var timeLeft = Math.max(0, Math.floor((new Date(s.expiresAt) - new Date()) / (1000 * 60 * 60)));
-      var isMine = s.userId === user.id;
-      return '<div class="feed-story-item" data-story=\'' + JSON.stringify(s).replace(/'/g, '&apos;') + '\'>' +
-        '<img src="' + s.avatar + '" class="feed-story-avatar" alt="">' +
-        '<div class="feed-story-info">' +
-          '<span class="feed-story-name">' + s.username + (isMine ? ' (You)' : '') + '</span>' +
-          '<span class="feed-story-time">' + timeLeft + 'h left</span>' +
-        '</div>' +
-        (s.mediaUrl ? '<span class="feed-story-type">\ud83d\udcf7</span>' : '<span class="feed-story-type">\ud83d\udcac</span>') +
-        (isMine ? '<button class="feed-story-delete" data-id="' + s.id + '">\u2715</button>' : '') +
-      '</div>';
-    }).join('');
-
-    list.querySelectorAll('.feed-story-item').forEach(function(el) {
-      el.addEventListener('click', function(e) {
-        if (e.target.classList.contains('feed-story-delete')) return;
-        document.getElementById('storyFeedOverlay').style.display = 'none';
-        showStory(JSON.parse(el.dataset.story));
-      });
-    });
-
-    list.querySelectorAll('.feed-story-delete').forEach(function(btn) {
-      btn.addEventListener('click', async function(e) {
-        e.stopPropagation();
-        var storyId = btn.dataset.id;
-        if (!confirm('Delete this story?')) return;
-        await fetch('/api/stories/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ storyId: storyId, userId: user.id })
-        });
-        loadStories();
-        document.getElementById('storyFeedBtn').click();
-      });
-    });
-  } catch(e) {
-    list.innerHTML = '<p style="color:var(--danger);text-align:center;">Error loading stories</p>';
-  }
-});
-
-document.getElementById('storyFeedCloseBtn').addEventListener('click', function() {
-  document.getElementById('storyFeedOverlay').style.display = 'none';
-});
-
-document.getElementById('storyFeedOverlay').addEventListener('click', function(e) {
-  if (e.target === document.getElementById('storyFeedOverlay')) {
-    document.getElementById('storyFeedOverlay').style.display = 'none';
-  }
 });
 
 // --- USERS ---
@@ -491,6 +502,51 @@ document.getElementById('logoutBtn').addEventListener('click', async function() 
   window.location.href = 'index.html';
 });
 
+document.getElementById('navLogout').addEventListener('click', async function() {
+  if (pollInterval) clearInterval(pollInterval);
+  await fetch('/api/offline', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: user.id })
+  });
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
+});
+
+document.getElementById('settingsLogout').addEventListener('click', async function() {
+  if (pollInterval) clearInterval(pollInterval);
+  await fetch('/api/offline', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: user.id })
+  });
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
+});
+
+document.getElementById('settingsStoryPrivacy').addEventListener('change', async function(e) {
+  var privacy = e.target.value;
+  try {
+    var res = await fetch('/api/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, storyPrivacy: privacy })
+    });
+    var data = await res.json();
+    if (res.ok) {
+      user.storyPrivacy = data.storyPrivacy;
+      localStorage.setItem('user', JSON.stringify(user));
+      document.getElementById('editStoryPrivacy').value = privacy;
+    }
+  } catch(e) {}
+});
+
+// Set initial privacy value
+if (user.storyPrivacy) {
+  var sp = document.getElementById('settingsStoryPrivacy');
+  if (sp) sp.value = user.storyPrivacy;
+}
+
 // --- EDIT PROFILE ---
 document.getElementById('editProfileBtn').addEventListener('click', function() {
   document.getElementById('editOverlay').style.display = 'flex';
@@ -548,6 +604,16 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
 
 // --- POST STORY ---
 document.getElementById('storyBtn').addEventListener('click', function() {
+  document.getElementById('storyOverlay2').style.display = 'flex';
+  if (user.storyPrivacy) document.getElementById('storyVisibility').value = user.storyPrivacy;
+});
+
+document.getElementById('storyBtnPanel').addEventListener('click', function() {
+  document.getElementById('storyOverlay2').style.display = 'flex';
+  if (user.storyPrivacy) document.getElementById('storyVisibility').value = user.storyPrivacy;
+});
+
+document.getElementById('storyPostBtn').addEventListener('click', function() {
   document.getElementById('storyOverlay2').style.display = 'flex';
   if (user.storyPrivacy) document.getElementById('storyVisibility').value = user.storyPrivacy;
 });

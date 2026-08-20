@@ -8,33 +8,116 @@
 </head>
 <body class="chat-page">
   <div class="app-container">
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="my-profile">
-          <img id="myAvatar" src="" class="my-avatar" alt="me">
-          <span id="myUsername"></span>
+
+    <!-- NAV BAR (Discord server bar style) -->
+    <div class="nav-bar" id="navBar">
+      <div class="nav-avatar" id="navAvatarWrap">
+        <img id="navAvatar" src="" alt="me">
+        <span class="nav-indicator"></span>
+      </div>
+      <div class="nav-divider"></div>
+      <button class="nav-btn active" data-panel="messages" title="Messages">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+      </button>
+      <button class="nav-btn" data-panel="stories" title="Stories">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      </button>
+      <button class="nav-btn" data-panel="groups" title="Groups">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      </button>
+      <div class="nav-divider"></div>
+      <button class="nav-btn" data-panel="profile" title="Profile">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </button>
+      <button class="nav-btn" data-panel="settings" title="Settings">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+      <div class="nav-spacer"></div>
+      <button class="nav-btn nav-logout" id="navLogout" title="Logout">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+      </button>
+    </div>
+
+    <!-- PANELS (switchable middle section) -->
+    <div class="panels-container" id="panelsContainer">
+
+      <!-- MESSAGES PANEL -->
+      <div class="panel panel-messages active" id="panelMessages">
+        <div class="panel-header">
+          <h3>Messages</h3>
+          <button class="icon-btn" id="storyBtnPanel" title="Post Story">+</button>
         </div>
-        <div class="sidebar-actions">
-          <button id="storyFeedBtn" class="icon-btn" title="Stories Feed">📰</button>
-          <button id="storyBtn" class="icon-btn" title="Post Story">📸</button>
-          <button id="editProfileBtn" class="icon-btn" title="Edit Profile">✏️</button>
-          <button id="logoutBtn" class="icon-btn logout" title="Logout">⏻</button>
+        <div class="stories-bar" id="storiesBar" style="display:none;"></div>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search users...">
+        </div>
+        <div class="users-list" id="usersList"></div>
+      </div>
+
+      <!-- STORIES PANEL -->
+      <div class="panel panel-stories" id="panelStories">
+        <div class="panel-header">
+          <h3>Stories</h3>
+          <button class="icon-btn" id="storyPostBtn" title="New Story">+</button>
+        </div>
+        <div class="story-feed-list" id="storyFeedList"></div>
+      </div>
+
+      <!-- GROUPS PANEL -->
+      <div class="panel panel-groups" id="panelGroups">
+        <div class="panel-header">
+          <h3>Groups</h3>
+        </div>
+        <div class="panel-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" style="opacity:0.3"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <p>Coming soon</p>
         </div>
       </div>
 
-      <!-- STORIES BAR -->
-      <div class="stories-bar" id="storiesBar" style="display:none;"></div>
-
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search users...">
+      <!-- PROFILE PANEL -->
+      <div class="panel panel-profile" id="panelProfile">
+        <div class="panel-header">
+          <h3>Profile</h3>
+        </div>
+        <div class="profile-view">
+          <img id="profileAvatar" src="" class="profile-avatar-lg" alt="">
+          <h2 id="profileName"></h2>
+          <p id="profileBio" class="profile-bio"></p>
+          <button class="btn btn-primary btn-block" id="editProfileBtn">Edit Profile</button>
+          <button class="btn btn-secondary btn-block" id="storyFeedBtn">View Stories</button>
+        </div>
       </div>
-      <div class="users-list" id="usersList"></div>
+
+      <!-- SETTINGS PANEL -->
+      <div class="panel panel-settings" id="panelSettings">
+        <div class="panel-header">
+          <h3>Settings</h3>
+        </div>
+        <div class="settings-list">
+          <div class="settings-item">
+            <span>Story Privacy</span>
+            <select id="settingsStoryPrivacy">
+              <option value="everyone">Everyone</option>
+              <option value="contacts">Contacts only</option>
+              <option value="nobody">Nobody</option>
+            </select>
+          </div>
+          <div class="settings-item">
+            <span>Theme</span>
+            <span class="settings-value">Dark</span>
+          </div>
+          <div class="settings-item">
+            <span>Version</span>
+            <span class="settings-value">1.0.0</span>
+          </div>
+          <button class="btn btn-danger btn-block" id="settingsLogout">Logout</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- CHAT AREA -->
     <div class="chat-area">
-      <!-- Placeholder -->
       <div class="chat-placeholder" id="chatPlaceholder">
         <div class="placeholder-icon">
           <svg viewBox="0 0 100 100" width="80" height="80">
@@ -44,8 +127,6 @@
         </div>
         <p>Select a user to start chatting</p>
       </div>
-
-      <!-- Active Chat -->
       <div class="chat-active" id="chatActive" style="display:none;">
         <div class="chat-header">
           <button class="icon-btn back-btn" id="backBtn">&larr;</button>
@@ -168,17 +249,6 @@
           <button type="submit" class="btn btn-primary">Post</button>
         </div>
       </form>
-    </div>
-  </div>
-
-  <!-- STORY FEED OVERLAY -->
-  <div class="overlay" id="storyFeedOverlay">
-    <div class="overlay-content story-feed">
-      <div class="story-feed-header">
-        <h3>Stories</h3>
-        <button class="story-close-btn" id="storyFeedCloseBtn">&times;</button>
-      </div>
-      <div class="story-feed-list" id="storyFeedList"></div>
     </div>
   </div>
 
