@@ -2,7 +2,11 @@
   "name": "z1hchat",
   "version": "1.0.0",
   "description": "Z1HCHAT - Chat with the world",
-  "main": "api/index.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
   "engines": {
     "node": ">=18.0.0"
   },

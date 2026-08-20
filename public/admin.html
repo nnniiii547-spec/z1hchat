@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Z1HCHAT - Admin Panel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-page">
+
+  <!-- LOGIN GATE -->
+  <div class="admin-login" id="adminLogin">
+    <div class="admin-login-card">
+      <svg viewBox="0 0 100 100" width="60" height="60">
+        <defs>
+          <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea"/>
+            <stop offset="100%" style="stop-color:#764ba2"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="48" fill="url(#logoGrad)"/>
+        <path d="M25 35 L50 20 L75 35 L75 55 C75 70 50 85 50 85 C50 85 25 70 25 55 Z" fill="white" opacity="0.95"/>
+      </svg>
+      <h1>Admin Panel</h1>
+      <p>Enter admin credentials</p>
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <label>Admin Key</label>
+          <input type="password" id="adminKey" placeholder="Enter admin key" required>
+        </div>
+        <div class="error-message" id="adminLoginError"></div>
+        <button type="submit" class="btn btn-primary btn-full">Access Panel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="admin-dashboard" id="adminDashboard" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-header">
+        <svg viewBox="0 0 100 100" width="32" height="32">
+          <circle cx="50" cy="50" r="48" fill="url(#logoGrad)"/>
+          <path d="M25 35 L50 20 L75 35 L75 55 C75 70 50 85 50 85 C50 85 25 70 25 55 Z" fill="white" opacity="0.95"/>
+        </svg>
+        <span>Z1H Admin</span>
+      </div>
+      <nav class="admin-nav">
+        <button class="admin-nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">
+          <span class="admin-nav-icon">&#9632;</span> Dashboard
+        </button>
+        <button class="admin-nav-btn" data-tab="appearance" onclick="switchTab('appearance')">
+          <span class="admin-nav-icon">&#9733;</span> Appearance
+        </button>
+        <button class="admin-nav-btn" data-tab="content" onclick="switchTab('content')">
+          <span class="admin-nav-icon">&#9998;</span> Content
+        </button>
+        <button class="admin-nav-btn" data-tab="pages" onclick="switchTab('pages')">
+          <span class="admin-nav-icon">&#9776;</span> Pages
+        </button>
+        <button class="admin-nav-btn" data-tab="users" onclick="switchTab('users')">
+          <span class="admin-nav-icon">&#9787;</span> Users
+        </button>
+        <button class="admin-nav-btn" data-tab="messages" onclick="switchTab('messages')">
+          <span class="admin-nav-icon">&#9993;</span> Messages
+        </button>
+        <button class="admin-nav-btn" data-tab="stories" onclick="switchTab('stories')">
+          <span class="admin-nav-icon">&#9729;</span> Stories
+        </button>
+        <button class="admin-nav-btn" data-tab="settings" onclick="switchTab('settings')">
+          <span class="admin-nav-icon">&#9881;</span> Settings
+        </button>
+        <div class="admin-divider"></div>
+        <button class="admin-nav-btn admin-ai-btn" data-tab="ai" onclick="switchTab('ai')">
+          <span class="admin-nav-icon">&#10024;</span> AI Assistant
+        </button>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <a href="chat.html" class="admin-nav-btn">&#8592; Back to App</a>
+        <button class="admin-nav-btn admin-logout-btn" onclick="adminLogout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- MOBILE TOP BAR -->
+    <div class="admin-mobile-topbar">
+      <button class="admin-menu-toggle" onclick="toggleAdminSidebar()">&#9776;</button>
+      <span>Z1H Admin</span>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main" id="adminMain">
+
+      <!-- DASHBOARD TAB -->
+      <div class="admin-tab active" id="tab-dashboard">
+        <h2>Dashboard</h2>
+        <div class="admin-stats" id="adminStats">
+          <div class="stat-card">
+            <div class="stat-value" id="statUsers">0</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statOnline">0</div>
+            <div class="stat-label">Online Now</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statStories">0</div>
+            <div class="stat-label">Active Stories</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statMessages">-</div>
+            <div class="stat-label">Total Messages</div>
+          </div>
+        </div>
+        <div class="admin-section">
+          <h3>Recent Users</h3>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="recentUsersTable">
+              <thead><tr><th>Avatar</th><th>Username</th><th>Email</th><th>Status</th><th>Joined</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-section">
+          <h3>Quick Actions</h3>
+          <div class="admin-quick-actions">
+            <button class="btn btn-primary" onclick="switchTab('appearance')">Change Theme</button>
+            <button class="btn btn-secondary" onclick="switchTab('content')">Edit Content</button>
+            <button class="btn btn-secondary" onclick="switchTab('users')">Manage Users</button>
+            <button class="btn btn-secondary" onclick="switchTab('settings')">Site Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPEARANCE TAB -->
+      <div class="admin-tab" id="tab-appearance">
+        <h2>Appearance</h2>
+        <p class="admin-desc">Customize the look and feel of your site. Changes apply instantly.</p>
+
+        <div class="admin-section">
+          <h3>Theme Colors</h3>
+          <div class="admin-color-grid">
+            <div class="admin-color-item">
+              <label>Primary Color</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorPrimary" value="#667eea">
+                <input type="text" id="colorPrimaryHex" value="#667eea" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Primary Dark</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorPrimaryDark" value="#5a67d8">
+                <input type="text" id="colorPrimaryDarkHex" value="#5a67d8" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Secondary Color</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorSecondary" value="#764ba2">
+                <input type="text" id="colorSecondaryHex" value="#764ba2" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Background (Dark)</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorBgDark" value="#0f0f1a">
+                <input type="text" id="colorBgDarkHex" value="#0f0f1a" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Card Background</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorBgCard" value="#1a1a2e">
+                <input type="text" id="colorBgCardHex" value="#1a1a2e" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Input Background</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorBgInput" value="#25253e">
+                <input type="text" id="colorBgInputHex" value="#25253e" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Text Primary</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorTextPrimary" value="#e8e8f0">
+                <input type="text" id="colorTextPrimaryHex" value="#e8e8f0" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Text Secondary</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorTextSecondary" value="#9898b0">
+                <input type="text" id="colorTextSecondaryHex" value="#9898b0" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Border Color</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorBorder" value="#2a2a45">
+                <input type="text" id="colorBorderHex" value="#2a2a45" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Success Color</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorSuccess" value="#48bb78">
+                <input type="text" id="colorSuccessHex" value="#48bb78" class="admin-hex-input">
+              </div>
+            </div>
+            <div class="admin-color-item">
+              <label>Danger Color</label>
+              <div class="admin-color-input">
+                <input type="color" id="colorDanger" value="#f56565">
+                <input type="text" id="colorDangerHex" value="#f56565" class="admin-hex-input">
+              </div>
+            </div>
+          </div>
+          <div class="admin-section-actions">
+            <button class="btn btn-primary" onclick="saveColors()">Save Colors</button>
+            <button class="btn btn-secondary" onclick="resetColors()">Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Preview</h3>
+          <div class="admin-preview" id="colorPreview">
+            <div class="preview-card">
+              <div class="preview-btn-primary">Primary Button</div>
+              <div class="preview-btn-secondary">Secondary Button</div>
+              <div class="preview-input">Input field example</div>
+              <div class="preview-text-primary">Primary text</div>
+              <div class="preview-text-secondary">Secondary text</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Logo</h3>
+          <div class="admin-logo-config">
+            <div class="admin-logo-preview" id="logoPreview">
+              <svg viewBox="0 0 100 100" width="80" height="80">
+                <circle cx="50" cy="50" r="48" fill="url(#logoGrad)"/>
+                <path d="M25 35 L50 20 L75 35 L75 55 C75 70 50 85 50 85 C50 85 25 70 25 55 Z" fill="white" opacity="0.95"/>
+              </svg>
+            </div>
+            <div class="admin-form-group">
+              <label>Custom Logo URL (leave empty for default SVG)</label>
+              <input type="text" id="customLogoUrl" placeholder="https://example.com/logo.png" class="admin-input">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT TAB -->
+      <div class="admin-tab" id="tab-content">
+        <h2>Content</h2>
+        <p class="admin-desc">Edit text content across your site without touching code.</p>
+
+        <div class="admin-section">
+          <h3>Landing Page</h3>
+          <div class="admin-form-group">
+            <label>Site Title</label>
+            <input type="text" id="siteTitle" value="Z1HCHAT" class="admin-input" placeholder="Site title">
+          </div>
+          <div class="admin-form-group">
+            <label>Tagline</label>
+            <input type="text" id="siteTagline" value="Connect with people from every corner of the world" class="admin-input" placeholder="Tagline">
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Feature Cards</h3>
+          <div id="featuresEditor">
+            <div class="admin-feature-card" data-index="0">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Icon (emoji)</label>
+                  <input type="text" class="admin-input feature-icon" value="&#128172;" placeholder="Emoji icon">
+                </div>
+                <div class="admin-form-group">
+                  <label>Title</label>
+                  <input type="text" class="admin-input feature-title" value="Real-Time Chat" placeholder="Feature title">
+                </div>
+              </div>
+              <div class="admin-form-group">
+                <label>Description</label>
+                <input type="text" class="admin-input feature-desc" value="Instant messaging with live typing indicators" placeholder="Feature description">
+              </div>
+            </div>
+            <div class="admin-feature-card" data-index="1">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Icon (emoji)</label>
+                  <input type="text" class="admin-input feature-icon" value="&#127758;" placeholder="Emoji icon">
+                </div>
+                <div class="admin-form-group">
+                  <label>Title</label>
+                  <input type="text" class="admin-input feature-title" value="Global Network" placeholder="Feature title">
+                </div>
+              </div>
+              <div class="admin-form-group">
+                <label>Description</label>
+                <input type="text" class="admin-input feature-desc" value="Meet and talk with people worldwide" placeholder="Feature description">
+              </div>
+            </div>
+            <div class="admin-feature-card" data-index="2">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Icon (emoji)</label>
+                  <input type="text" class="admin-input feature-icon" value="&#128274;" placeholder="Emoji icon">
+                </div>
+                <div class="admin-form-group">
+                  <label>Title</label>
+                  <input type="text" class="admin-input feature-title" value="Secure" placeholder="Feature title">
+                </div>
+              </div>
+              <div class="admin-form-group">
+                <label>Description</label>
+                <input type="text" class="admin-input feature-desc" value="Your conversations are private and safe" placeholder="Feature description">
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="addFeatureCard()">+ Add Feature</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>CTA Buttons (Landing Page)</h3>
+          <div id="ctaEditor">
+            <div class="admin-cta-item" data-index="0">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Button Text</label>
+                  <input type="text" class="admin-input cta-text" value="Create Account" placeholder="Button text">
+                </div>
+                <div class="admin-form-group">
+                  <label>Link URL</label>
+                  <input type="text" class="admin-input cta-url" value="register.html" placeholder="URL">
+                </div>
+                <div class="admin-form-group">
+                  <label>Style</label>
+                  <select class="admin-input cta-style">
+                    <option value="btn-primary" selected>Primary</option>
+                    <option value="btn-secondary">Secondary</option>
+                    <option value="btn-download">Download</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="admin-cta-item" data-index="1">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Button Text</label>
+                  <input type="text" class="admin-input cta-text" value="Sign In" placeholder="Button text">
+                </div>
+                <div class="admin-form-group">
+                  <label>Link URL</label>
+                  <input type="text" class="admin-input cta-url" value="login.html" placeholder="URL">
+                </div>
+                <div class="admin-form-group">
+                  <label>Style</label>
+                  <select class="admin-input cta-style">
+                    <option value="btn-primary">Primary</option>
+                    <option value="btn-secondary" selected>Secondary</option>
+                    <option value="btn-download">Download</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="admin-cta-item" data-index="2">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Button Text</label>
+                  <input type="text" class="admin-input cta-text" value="Download App" placeholder="Button text">
+                </div>
+                <div class="admin-form-group">
+                  <label>Link URL</label>
+                  <input type="text" class="admin-input cta-url" value="download.html" placeholder="URL">
+                </div>
+                <div class="admin-form-group">
+                  <label>Style</label>
+                  <select class="admin-input cta-style">
+                    <option value="btn-primary">Primary</option>
+                    <option value="btn-secondary">Secondary</option>
+                    <option value="btn-download" selected>Download</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="addCtaButton()">+ Add Button</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>Download Page</h3>
+          <div class="admin-form-group">
+            <label>Download Title</label>
+            <input type="text" id="dlTitle" value="Z1HCHAT" class="admin-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Download Description</label>
+            <input type="text" id="dlDesc" value="Chat with people around the world" class="admin-input">
+          </div>
+          <div class="admin-form-group">
+            <label>APK File URL</label>
+            <input type="text" id="dlApkUrl" value="/downloads/Z1HCHAT.apk" class="admin-input" placeholder="/downloads/app.apk">
+          </div>
+          <div class="admin-form-group">
+            <label>Version</label>
+            <input type="text" id="dlVersion" value="1.0.0" class="admin-input">
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <button class="btn btn-primary" onclick="saveContent()">Save All Content</button>
+        </div>
+      </div>
+
+      <!-- PAGES TAB -->
+      <div class="admin-tab" id="tab-pages">
+        <h2>Pages & Navigation</h2>
+        <p class="admin-desc">Control which pages and links are visible.</p>
+
+        <div class="admin-section">
+          <h3>Navigation Links</h3>
+          <div id="navLinksEditor">
+            <div class="admin-navlink-item">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Label</label>
+                  <input type="text" class="admin-input navlink-label" value="Sign In">
+                </div>
+                <div class="admin-form-group">
+                  <label>URL</label>
+                  <input type="text" class="admin-input navlink-url" value="login.html">
+                </div>
+                <div class="admin-form-group">
+                  <label>Visible</label>
+                  <select class="admin-input navlink-visible">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="admin-navlink-item">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Label</label>
+                  <input type="text" class="admin-input navlink-label" value="Create Account">
+                </div>
+                <div class="admin-form-group">
+                  <label>URL</label>
+                  <input type="text" class="admin-input navlink-url" value="register.html">
+                </div>
+                <div class="admin-form-group">
+                  <label>Visible</label>
+                  <select class="admin-input navlink-visible">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="admin-navlink-item">
+              <div class="admin-form-row">
+                <div class="admin-form-group">
+                  <label>Label</label>
+                  <input type="text" class="admin-input navlink-label" value="Download">
+                </div>
+                <div class="admin-form-group">
+                  <label>URL</label>
+                  <input type="text" class="admin-input navlink-url" value="download.html">
+                </div>
+                <div class="admin-form-group">
+                  <label>Visible</label>
+                  <select class="admin-input navlink-visible">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="addNavLink()">+ Add Link</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>Page Status</h3>
+          <div class="admin-toggle-list">
+            <div class="admin-toggle-item">
+              <span>Registration Page</span>
+              <label class="admin-toggle">
+                <input type="checkbox" id="toggleRegister" checked>
+                <span class="admin-toggle-slider"></span>
+              </label>
+            </div>
+            <div class="admin-toggle-item">
+              <span>Download Page</span>
+              <label class="admin-toggle">
+                <input type="checkbox" id="toggleDownload" checked>
+                <span class="admin-toggle-slider"></span>
+              </label>
+            </div>
+            <div class="admin-toggle-item">
+              <span>Stories Feature</span>
+              <label class="admin-toggle">
+                <input type="checkbox" id="toggleStories" checked>
+                <span class="admin-toggle-slider"></span>
+              </label>
+            </div>
+            <div class="admin-toggle-item">
+              <span>Voice Messages</span>
+              <label class="admin-toggle">
+                <input type="checkbox" id="toggleVoice" checked>
+                <span class="admin-toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <button class="btn btn-primary" onclick="savePages()">Save Page Settings</button>
+        </div>
+      </div>
+
+      <!-- USERS TAB -->
+      <div class="admin-tab" id="tab-users">
+        <h2>Users</h2>
+        <p class="admin-desc">Manage all registered users.</p>
+
+        <div class="admin-section">
+          <div class="admin-search-bar">
+            <input type="text" id="adminUserSearch" placeholder="Search users..." class="admin-input" oninput="filterAdminUsers()">
+            <span class="admin-user-count" id="adminUserCount">0 users</span>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="adminUsersTable">
+              <thead><tr><th>Avatar</th><th>Username</th><th>Email</th><th>Bio</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MESSAGES TAB -->
+      <div class="admin-tab" id="tab-messages">
+        <h2>Messages</h2>
+        <p class="admin-desc">View and manage all conversations.</p>
+
+        <div class="admin-section">
+          <div class="admin-chat-list" id="adminChatList">
+            <p class="admin-desc">Select two users to view their conversation:</p>
+            <div class="admin-form-row">
+              <div class="admin-form-group">
+                <label>User 1</label>
+                <select id="adminMsgUser1" class="admin-input" onchange="loadAdminChat()"></select>
+              </div>
+              <div class="admin-form-group">
+                <label>User 2</label>
+                <select id="adminMsgUser2" class="admin-input" onchange="loadAdminChat()"></select>
+              </div>
+            </div>
+          </div>
+          <div class="admin-messages-view" id="adminMessagesView" style="display:none;">
+            <div class="admin-messages-header">
+              <span id="adminChatTitle">Chat</span>
+              <button class="btn btn-secondary" onclick="closeAdminChat()">Close</button>
+            </div>
+            <div class="admin-messages-list" id="adminMessagesList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STORIES TAB -->
+      <div class="admin-tab" id="tab-stories">
+        <h2>Stories</h2>
+        <p class="admin-desc">View and delete all active stories.</p>
+
+        <div class="admin-section">
+          <div class="admin-stories-list" id="adminStoriesList">
+            <p class="admin-desc">Loading stories...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="admin-tab" id="tab-settings">
+        <h2>Site Settings</h2>
+        <p class="admin-desc">Configure global site settings.</p>
+
+        <div class="admin-section">
+          <h3>Admin Security</h3>
+          <div class="admin-form-group">
+            <label>Change Admin Key</label>
+            <div class="admin-form-row">
+              <input type="password" id="newAdminKey" placeholder="New admin key (min 8 chars)" class="admin-input">
+              <button class="btn btn-primary" onclick="changeAdminKey()">Update Key</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Maintenance Mode</h3>
+          <div class="admin-toggle-list">
+            <div class="admin-toggle-item">
+              <span>Enable Maintenance Mode</span>
+              <label class="admin-toggle">
+                <input type="checkbox" id="toggleMaintenance">
+                <span class="admin-toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="admin-form-group" style="margin-top:12px;">
+            <label>Maintenance Message</label>
+            <input type="text" id="maintenanceMsg" value="We are currently performing maintenance. Please check back later." class="admin-input">
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Announcements</h3>
+          <div class="admin-form-group">
+            <label>Banner Text (shown on all pages, empty to hide)</label>
+            <input type="text" id="announcementText" placeholder="e.g. New update available!" class="admin-input">
+          </div>
+          <div class="admin-form-group">
+            <label>Banner Color</label>
+            <div class="admin-color-input">
+              <input type="color" id="announcementColor" value="#48bb78">
+              <input type="text" id="announcementColorHex" value="#48bb78" class="admin-hex-input">
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Advanced</h3>
+          <div class="admin-form-group">
+            <label>Custom CSS (injected into all pages)</label>
+            <textarea id="customCss" class="admin-textarea" rows="6" placeholder="/* Custom CSS here */"></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Custom JavaScript (injected into all pages)</label>
+            <textarea id="customJs" class="admin-textarea" rows="6" placeholder="// Custom JS here"></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Meta Description (SEO)</label>
+            <input type="text" id="metaDescription" class="admin-input" placeholder="Describe your site for search engines">
+          </div>
+          <div class="admin-form-group">
+            <label>Footer Text</label>
+            <input type="text" id="footerText" class="admin-input" placeholder="&copy; 2026 Z1HCHAT. All rights reserved.">
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>Data Management</h3>
+          <div class="admin-quick-actions">
+            <button class="btn btn-secondary" onclick="exportSiteConfig()">Export Config</button>
+            <label class="btn btn-secondary admin-file-label">
+              Import Config
+              <input type="file" id="importConfigFile" accept=".json" onchange="importSiteConfig(event)" style="display:none;">
+            </label>
+            <button class="btn btn-danger" onclick="resetAllConfig()">Reset All to Defaults</button>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+      </div>
+
+      <!-- AI ASSISTANT TAB -->
+      <div class="admin-tab" id="tab-ai">
+        <h2>AI Assistant</h2>
+        <p class="admin-desc">Tell me what to do in natural language (Arabic or English). I'll execute it for you.</p>
+
+        <div class="ai-chat-container" id="aiChatContainer">
+          <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-msg ai-msg-bot">
+              <div class="ai-msg-avatar">&#10024;</div>
+              <div class="ai-msg-content">
+                <div class="ai-msg-text">Hello! I'm your site assistant. Tell me what you want to change and I'll do it. Try saying:</div>
+                <div class="ai-suggestions">
+                  <button class="ai-suggestion" onclick="aiSendCommand('change primary color to red')">Change primary color to red</button>
+                  <button class="ai-suggestion" onclick="aiSendCommand('change site title to MyChat')">Change site title to MyChat</button>
+                  <button class="ai-suggestion" onclick="aiSendCommand('add a new feature called Video Chat')">Add a new feature</button>
+                  <button class="ai-suggestion" onclick="aiSendCommand('enable maintenance mode')">Enable maintenance mode</button>
+                  <button class="ai-suggestion" onclick="aiSendCommand('disable stories')">Disable stories</button>
+                  <button class="ai-suggestion" onclick="aiSendCommand('change background to black')">Change background to black</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <form class="ai-chat-input" id="aiChatForm">
+            <input type="text" id="aiChatInput" placeholder="Type a command... (e.g. change theme to blue)" autocomplete="off">
+            <button type="submit" class="ai-send-btn">&#10148;</button>
+          </form>
+        </div>
+
+        <div class="admin-section" style="margin-top:16px;">
+          <h3>Supported Commands</h3>
+          <div class="ai-help-grid">
+            <div class="ai-help-item">
+              <strong>Colors</strong>
+              <code>change primary color to #ff0000</code>
+              <code>change background to dark blue</code>
+              <code>change theme to red</code>
+            </div>
+            <div class="ai-help-item">
+              <strong>Content</strong>
+              <code>change site title to MyChat</code>
+              <code>change tagline to "Hello World"</code>
+              <code>change download description</code>
+            </div>
+            <div class="ai-help-item">
+              <strong>Features</strong>
+              <code>add a feature called Video Chat</code>
+              <code>remove feature 2</code>
+              <code>edit feature 1 title to Voice Chat</code>
+            </div>
+            <div class="ai-help-item">
+              <strong>Toggles</strong>
+              <code>enable stories</code>
+              <code>disable voice messages</code>
+              <code>enable maintenance mode</code>
+              <code>disable registration</code>
+            </div>
+            <div class="ai-help-item">
+              <strong>Layout</strong>
+              <code>change border radius to 20px</code>
+              <code>make buttons bigger</code>
+              <code>change font to serif</code>
+            </div>
+            <div class="ai-help-item">
+              <strong>Actions</strong>
+              <code>show users list</code>
+              <code>show stats</code>
+              <code>reset theme to default</code>
+              <code>export config</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="admin-toast" id="adminToast"></div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

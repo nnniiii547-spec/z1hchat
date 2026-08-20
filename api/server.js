@@ -314,6 +314,96 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true, deletedId: storyId });
     }
 
+    // ADMIN - GET SITE CONFIG
+    if (req.method === 'GET' && url === '/api/admin/config') {
+      const config = await redis.get('site:config');
+      return res.status(200).json(config || {});
+    }
+
+    // ADMIN - SAVE SITE CONFIG
+    if (req.method === 'POST' && url === '/api/admin/config') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { adminKey, config } = body;
+      const storedKey = await redis.get('admin:key') || 'admin123';
+      if (adminKey !== storedKey) return res.status(403).json({ error: 'Invalid admin key' });
+      await redis.set('site:config', JSON.stringify(config));
+      return res.status(200).json({ ok: true });
+    }
+
+    // ADMIN - CHANGE ADMIN KEY
+    if (req.method === 'POST' && url === '/api/admin/key') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { oldKey, newKey } = body;
+      const storedKey = await redis.get('admin:key') || 'admin123';
+      if (oldKey !== storedKey) return res.status(403).json({ error: 'Invalid current key' });
+      if (!newKey || newKey.length < 8) return res.status(400).json({ error: 'New key must be at least 8 characters' });
+      await redis.set('admin:key', newKey);
+      return res.status(200).json({ ok: true });
+    }
+
+    // ADMIN - DELETE USER
+    if (req.method === 'POST' && url === '/api/admin/delete-user') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { adminKey, userId } = body;
+      const storedKey = await redis.get('admin:key') || 'admin123';
+      if (adminKey !== storedKey) return res.status(403).json({ error: 'Invalid admin key' });
+      const userData = await redis.get(`user:${userId}`);
+      if (!userData) return res.status(404).json({ error: 'User not found' });
+      const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
+      await redis.del(`user:${userId}`);
+      await redis.del(`email:${user.email}`);
+      await redis.del(`username:${user.username.toLowerCase()}`);
+      await redis.del(`stories:${userId}`);
+      return res.status(200).json({ ok: true, deletedUser: user.username });
+    }
+
+    // ADMIN - GET ALL STORIES
+    if (req.method === 'GET' && url === '/api/admin/stories') {
+      const keys = await redis.keys('stories:*');
+      const allStories = [];
+      for (const key of keys) {
+        const storyData = await redis.get(key);
+        if (storyData) {
+          let stories = typeof storyData === 'string' ? JSON.parse(storyData) : storyData;
+          stories = stories.filter(s => new Date(s.expiresAt) > new Date());
+          allStories.push(...stories);
+        }
+      }
+      return res.status(200).json(allStories);
+    }
+
+    // ADMIN - DELETE STORY
+    if (req.method === 'POST' && url === '/api/admin/delete-story') {
+      let body = req.body;
+      if (typeof body === 'string') body = JSON.parse(body);
+      const { adminKey, storyId, userId } = body;
+      const storedKey = await redis.get('admin:key') || 'admin123';
+      if (adminKey !== storedKey) return res.status(403).json({ error: 'Invalid admin key' });
+      const key = `stories:${userId}`;
+      const storyData = await redis.get(key);
+      if (!storyData) return res.status(404).json({ error: 'No stories found' });
+      let stories = typeof storyData === 'string' ? JSON.parse(storyData) : storyData;
+      stories = stories.filter(s => s.id !== storyId);
+      if (stories.length === 0) await redis.del(key);
+      else await redis.set(key, JSON.stringify(stories));
+      return res.status(200).json({ ok: true });
+    }
+
+    // ADMIN - GET ALL CHATS BETWEEN TWO USERS
+    if (req.method === 'GET' && url.startsWith('/api/admin/chat')) {
+      const params = new URL(req.url, 'http://x').searchParams;
+      const user1 = params.get('user1');
+      const user2 = params.get('user2');
+      if (!user1 || !user2) return res.status(400).json({ error: 'Missing user1 or user2' });
+      const chatKey = [user1, user2].sort().join(':');
+      const msgData = await redis.get(`chat:${chatKey}`);
+      let messages = msgData ? (typeof msgData === 'string' ? JSON.parse(msgData) : msgData) : [];
+      return res.status(200).json(messages);
+    }
+
     // ONLINE / OFFLINE
     if (req.method === 'POST' && url === '/api/online') {
       let body = req.body;

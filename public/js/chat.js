@@ -9,7 +9,7 @@ let currentViewingStory = null;
 let storyTimeout = null;
 const isMobile = () => window.innerWidth <= 768;
 
-const sidebar = document.getElementById('sidebar');
+const sidebar = document.getElementById('panelsContainer');
 
 document.getElementById('myAvatar').src = user.avatar;
 document.getElementById('myUsername').textContent = user.username;
@@ -491,16 +491,6 @@ function stopRecording() {
 document.getElementById('searchInput').addEventListener('input', loadUsers);
 
 // --- LOGOUT ---
-document.getElementById('logoutBtn').addEventListener('click', async function() {
-  if (pollInterval) clearInterval(pollInterval);
-  await fetch('/api/offline', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: user.id })
-  });
-  localStorage.removeItem('user');
-  window.location.href = 'index.html';
-});
 
 document.getElementById('navLogout').addEventListener('click', async function() {
   if (pollInterval) clearInterval(pollInterval);
@@ -595,6 +585,7 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
     localStorage.setItem('user', JSON.stringify(user));
     document.getElementById('myAvatar').src = user.avatar;
     document.getElementById('myUsername').textContent = user.username;
+    document.getElementById('navAvatar').src = user.avatar;
     document.getElementById('editOverlay').style.display = 'none';
     loadUsers();
   } catch (e) {
@@ -603,11 +594,6 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
 });
 
 // --- POST STORY ---
-document.getElementById('storyBtn').addEventListener('click', function() {
-  document.getElementById('storyOverlay2').style.display = 'flex';
-  if (user.storyPrivacy) document.getElementById('storyVisibility').value = user.storyPrivacy;
-});
-
 document.getElementById('storyBtnPanel').addEventListener('click', function() {
   document.getElementById('storyOverlay2').style.display = 'flex';
   if (user.storyPrivacy) document.getElementById('storyVisibility').value = user.storyPrivacy;
